@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <iterator>
 #include <string>
 
 #include <boost/locale/encoding_utf.hpp>

@@ -78,8 +78,21 @@ set(CMAKE_C_STANDARD 99)
 
 # Settings ---------------------------------------------------------------------
 
+if(WIN32)
+	add_compile_definitions(NOMINMAX) # Prevent Windows.h from redefining min/max functions.
+	add_compile_definitions(BOOST_USE_WINDOWS_H)
+	# If clang-cl.exe ...
+	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
+		add_compile_definitions(_CRT_SECURE_NO_WARNINGS) # Clang-cl doesn't disable the warnings as boost expects.
+	endif()
+endif()
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option -fcolor-diagnostics -fvisibility-inlines-hidden")
+	if ("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC") # Clang-cl.exe
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xclang -fms-compatibility-version=1926 -Xclang -fcxx-exceptions -Xclang -Wno-unknown-warning-option -Xclang -fcolor-diagnostics -Xclang -fvisibility-inlines-hidden -Xclang -fexceptions -Xclang -fcxx-exceptions")
+	else()
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option -fcolor-diagnostics -fvisibility-inlines-hidden")
+	endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	ADD_COMPILE_OPTIONS(/MP)
 endif()
@@ -124,6 +137,7 @@ endif()
 
 if (BUILD_CXX_LANGUAGE_PACKAGE)
 
+	find_package(LLVM REQUIRED)
 	find_package(Clang REQUIRED)
 
 	if (LLVM_FOUND)
@@ -140,7 +154,9 @@ set(Boost_USE_STATIC_LIBS ON CACHE BOOL "Set to ON to force the use of the stati
 set(Boost_USE_STATIC_RUNTIME OFF)
 
 find_package(Boost 1.67 COMPONENTS system program_options filesystem date_time REQUIRED)
-
+if(DEFINED BOOST_LIB_TOOLSET)
+	add_compile_definitions(BOOST_LIB_TOOLSET="${BOOST_LIB_TOOLSET}")
+endif()
 
 # Qt ---------------------------------------------------------------------------
 
@@ -676,8 +692,7 @@ target_include_directories(${APP_PROJECT_NAME} SYSTEM
 )
 
 # Use the Widgets module from Qt 5.
-qt5_use_modules(${APP_PROJECT_NAME} Widgets)
-qt5_use_modules(${APP_PROJECT_NAME} Network)
+target_link_libraries(${APP_PROJECT_NAME} Qt5::Network Qt5::Widgets)
 
 # add platform specific libraries
 if (APPLE)
@@ -781,7 +796,7 @@ set_property(
 		$<$<BOOL:${BUILD_PYTHON_LANGUAGE_PACKAGE}>:${LIB_PYTHON_INCLUDE_PATHS}>
 )
 
-if (WIN32)
+if (WIN32 AND MSVC)
 	set_target_properties(${TEST_PROJECT_NAME} PROPERTIES COMPILE_FLAGS "/bigobj")
 	set_property(
 		TARGET ${TEST_PROJECT_NAME}

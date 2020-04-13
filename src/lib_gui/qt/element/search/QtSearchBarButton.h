@@ -6,7 +6,7 @@
 class QtSearchBarButton: public QtSelfRefreshIconButton
 {
 public:
-	QtSearchBarButton(const FilePath& iconPath, bool small = false, QWidget* parent = nullptr);
+	QtSearchBarButton(const FilePath& iconPath, bool isSmall = false, QWidget* parent = nullptr);
 
 protected:
 	void refresh() override;
