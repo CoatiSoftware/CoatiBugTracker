@@ -35,6 +35,13 @@ allprojects { pp ->
 					eachFile { println "copying file \"" + it.file.name + "\" to \"" + destination + "\"" }
 				}
 			}
+			if (pp.configurations.hasProperty("optional")) {
+				copy {
+						into destination
+						from pp.configurations.optional
+						eachFile { println "copying file \"" + it.file.name + "\" to \"" + destination + "\"" }
+				}
+			}
 		}
 	}
 	
