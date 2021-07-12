@@ -1,3 +1,11 @@
+def copyDependencies(source, destination) {
+        copy {
+                into destination
+                from source
+                eachFile { println "copying file \"" + it.file.name + "\" to \"" + destination + "\"" }
+        }
+}
+
 allprojects { pp ->
 	task printMainSrcDirs {
 		doLast {
@@ -28,13 +36,12 @@ allprojects { pp ->
 			File rootDir = pp.getRootDir()
 			String destination = project.hasProperty('sourcetrail_lib_path') ? project.property('sourcetrail_lib_path').replace("\"", "") : rootDir.getPath() + rootDir.separator + "lib"
 			println destination;
-			if (pp.configurations.hasProperty("compile")) {
-				copy {
-					into destination
-					from pp.configurations.compile
-					eachFile { println "copying file \"" + it.file.name + "\" to \"" + destination + "\"" }
-				}
-			}
+                        if (pp.configurations.hasProperty("compile")) {
+                                copyDependencies(pp.configurations.compile, destination)
+                        }
+                        if (pp.configurations.hasProperty("compileClasspath")) {
+                                copyDependencies(pp.configurations.compileClasspath, destination)
+                        }
 		}
 	}
 	
@@ -42,13 +49,12 @@ allprojects { pp ->
 		doLast {
 			File rootDir = pp.getRootDir()
 			String destination = project.hasProperty('sourcetrail_lib_path') ? project.property('sourcetrail_lib_path') : rootDir.getPath() + rootDir.separator + "lib"
-			if (pp.configurations.hasProperty("testCompile")) {
-				copy {
-					into destination
-					from pp.configurations.testCompile
-					eachFile { println "copying file \"" + it.file.name + "\" to \"" + destination + "\"" }
-				}
-			}
+                        if (pp.configurations.hasProperty("testCompile")) {
+                                copyDependencies(pp.configurations.testCompile, destination)
+                        }
+                        if (pp.configurations.hasProperty("testCompileClasspath")) {
+                                copyDependencies(pp.configurations.testCompileClasspath, destination)
+                        }
 		}
 	}
 }
